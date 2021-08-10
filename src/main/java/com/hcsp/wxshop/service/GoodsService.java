@@ -1,6 +1,7 @@
 package com.hcsp.wxshop.service;
 
 import com.hcsp.wxshop.entity.DataStatus;
+import com.hcsp.wxshop.entity.HttpException;
 import com.hcsp.wxshop.entity.PageResponse;
 import com.hcsp.wxshop.generate.Goods;
 import com.hcsp.wxshop.generate.GoodsExample;
@@ -30,7 +31,7 @@ public class GoodsService {
             goods.setId(id);
             return goods;
         } else {
-            throw new NotAuthorizedForShopException("无权访问！");
+            throw HttpException.forbidden("无权访问！");
         }
     }
 
@@ -42,11 +43,11 @@ public class GoodsService {
             byId.createCriteria().andIdEqualTo(goods.getId());
             long affectedRows = goodsMapper.updateByExample(goods, byId);
             if (affectedRows == 0) {
-                throw new ResourceNotFoundException("未找到");
+                throw HttpException.noutFount("未找到");
             }
             return goods;
         } else {
-            throw new NotAuthorizedForShopException("无权访问！");
+            throw HttpException.forbidden("无权访问！");
         }
     }
 
@@ -57,19 +58,13 @@ public class GoodsService {
             //逻辑删除，要先查出来
             Goods goods = goodsMapper.selectByPrimaryKey(goodsId);
             if (goods == null) {
-                throw new ResourceNotFoundException("商品未找到！");
+                throw HttpException.noutFount("商品未找到！");
             }
             goods.setStatus(DataStatus.DELETED.getName());
             goodsMapper.updateByPrimaryKey(goods);
             return goods;
         } else {
-            throw new NotAuthorizedForShopException("无权访问！");
-        }
-    }
-
-    public static class ResourceNotFoundException extends RuntimeException {
-        public ResourceNotFoundException(String message) {
-            super(message);
+            throw HttpException.forbidden("无权访问！");
         }
     }
 
@@ -101,11 +96,4 @@ public class GoodsService {
             return (int) goodsMapper.countByExample(goodsExample);
         }
     }
-
-    public static class NotAuthorizedForShopException extends RuntimeException {
-        public NotAuthorizedForShopException(String message) {
-            super(message);
-        }
-    }
-
 }
