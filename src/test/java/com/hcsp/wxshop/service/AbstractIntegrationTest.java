@@ -50,23 +50,23 @@ public class AbstractIntegrationTest {
     }
 
     public UserLoginResponse loginAndGetCookie() throws JsonProcessingException {
-        // 最开始默认情况下，访问/api/status 处于未登录状态，
-        String statusResponse = doHttpRequest("/api/status", true, null, null).body;
+        // 最开始默认情况下，访问/api/v1/status 处于未登录状态，
+        String statusResponse = doHttpRequest("/api/v1/status", true, null, null).body;
         LoginResponse statusResponseData = objectMapper.readValue(statusResponse, LoginResponse.class);
         Assertions.assertFalse(statusResponseData.isLogin());
 
         // 发送验证码
-        int respondseCode = doHttpRequest("/api/code", false, VALID_PARAMETER, null).code;
+        int respondseCode = doHttpRequest("/api/v1/code", false, VALID_PARAMETER, null).code;
         Assertions.assertEquals(HTTP_OK, respondseCode);
 
         // 带着验证码进行登录，得到cookie
-        HttpResponse loginResponse = doHttpRequest("/api/login", false, VALID_PARAMETER_CODE, null);
+        HttpResponse loginResponse = doHttpRequest("/api/v1/login", false, VALID_PARAMETER_CODE, null);
         List<String> setCookie = loginResponse.headers.get("Set-Cookie");
         String cookie = getSeesionIdFromSetCookie(setCookie.stream().filter(c -> c.contains("JSESSIONID"))
             .findFirst()
             .get());
 
-        statusResponse = doHttpRequest("/api/status", true, null, cookie).body;
+        statusResponse = doHttpRequest("/api/v1/status", true, null, cookie).body;
         statusResponseData = objectMapper.readValue(statusResponse, LoginResponse.class);
 
         return new UserLoginResponse(cookie, statusResponseData.getUser());

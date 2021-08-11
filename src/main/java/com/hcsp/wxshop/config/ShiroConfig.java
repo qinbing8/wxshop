@@ -40,10 +40,10 @@ public class ShiroConfig implements WebMvcConfigurer {
         shiroFilterFactoryBean.setFilters(filtersMap);
 
         Map<String, String> pattern = new HashMap<>();
-        pattern.put("/api/code", "anon"); // anonymous
-        pattern.put("/api/login", "anon");
-        pattern.put("/api/status", "anon");
-        pattern.put("/api/logout", "anon");
+        pattern.put("/api/v1/code", "anon"); // anonymous
+        pattern.put("/api/v1/login", "anon");
+        pattern.put("/api/v1/status", "anon");
+        pattern.put("/api/v1/logout", "anon");
         pattern.put("/**", "authc");
 
         shiroFilterFactoryBean.setFilterChainDefinitionMap(pattern);
