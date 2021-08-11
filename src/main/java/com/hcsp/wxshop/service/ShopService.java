@@ -9,6 +9,7 @@ import com.hcsp.wxshop.generate.ShopMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,6 +41,10 @@ public class ShopService {
 
     public Shop createShop(Shop shop, Long creatorId) {
         shop.setOwnerUserId(creatorId);
+
+        shop.setCreatedAt(new Date());
+        shop.setUpdatedAt(new Date());
+        shop.setStatus(DataStatus.OK.getName());
         long shopId = shopMapper.insert(shop);
         shop.setId(shopId);
         return shop;
@@ -53,6 +58,8 @@ public class ShopService {
         if (!Objects.equals(shopInDatabase.getOwnerUserId(), userId)) {
             throw HttpException.forbidden("无权访问！");
         }
+
+        shop.setUpdatedAt(new Date());
         shopMapper.updateByPrimaryKey(shop);
         return shop;
     }
@@ -67,7 +74,7 @@ public class ShopService {
         }
 
         shopInDatabase.setStatus(DataStatus.DELETED.getName());
-
+        shopInDatabase.setUpdatedAt(new Date());
         shopMapper.updateByPrimaryKey(shopInDatabase);
         return shopInDatabase;
     }

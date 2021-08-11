@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kevinsawicki.http.HttpRequest;
 import com.hcsp.wxshop.entity.LoginResponse;
+import com.hcsp.wxshop.generate.User;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.configuration.ClassicConfiguration;
 import org.junit.jupiter.api.Assertions;
@@ -48,23 +49,27 @@ public class AbstractIntegrationTest {
         return "http://localhost:" + environment.getProperty("local.server.port") + apiName;
     }
 
-    public String loginAndGetCookie() throws JsonProcessingException {
+    public UserLoginResponse loginAndGetCookie() throws JsonProcessingException {
         // 最开始默认情况下，访问/api/status 处于未登录状态，
         String statusResponse = doHttpRequest("/api/status", true, null, null).body;
-        LoginResponse response = objectMapper.readValue(statusResponse, LoginResponse.class);
-        Assertions.assertFalse(response.isLogin());
+        LoginResponse statusResponseData = objectMapper.readValue(statusResponse, LoginResponse.class);
+        Assertions.assertFalse(statusResponseData.isLogin());
 
         // 发送验证码
         int respondseCode = doHttpRequest("/api/code", false, VALID_PARAMETER, null).code;
         Assertions.assertEquals(HTTP_OK, respondseCode);
 
         // 带着验证码进行登录，得到cookie
-        Map<String, List<String>> responseHeaders =
-            doHttpRequest("/api/login", false, VALID_PARAMETER_CODE, null).headers;
-        List<String> setCookie = responseHeaders.get("Set-Cookie");
-        return getSeesionIdFromSetCookie(setCookie.stream().filter(cookie -> cookie.contains("JSESSIONID"))
+        HttpResponse loginResponse = doHttpRequest("/api/login", false, VALID_PARAMETER_CODE, null);
+        List<String> setCookie = loginResponse.headers.get("Set-Cookie");
+        String cookie = getSeesionIdFromSetCookie(setCookie.stream().filter(c -> c.contains("JSESSIONID"))
             .findFirst()
             .get());
+
+        statusResponse = doHttpRequest("/api/status", true, null, cookie).body;
+        statusResponseData = objectMapper.readValue(statusResponse, LoginResponse.class);
+
+        return new UserLoginResponse(cookie, statusResponseData.getUser());
     }
 
     protected String getSeesionIdFromSetCookie(String setCookie) {
@@ -72,6 +77,16 @@ public class AbstractIntegrationTest {
         // JSESSIONID=61e6bc98-20a1-4cfb-a262-8e3f75b67ee0; Path=/; HttpOnly; SameSite=lax -> JSESSIONID=61e6bc98-20a1-4cfb-a262-8e3f75b67ee0
         int semiColonIndex = setCookie.indexOf(";");
         return setCookie.substring(0, semiColonIndex);
+    }
+
+    public static class UserLoginResponse {
+        String cookie;
+        User user;
+
+        public UserLoginResponse(String cookie, User user) {
+            this.cookie = cookie;
+            this.user = user;
+        }
     }
 
     public static class HttpResponse {

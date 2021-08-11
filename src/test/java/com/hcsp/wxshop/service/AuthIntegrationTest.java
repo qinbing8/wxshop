@@ -23,7 +23,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 class AuthIntegrationTest extends AbstractIntegrationTest {
     @Test
     void loginLogoutTest() throws JsonProcessingException {
-        String sessionid = loginAndGetCookie();
+        String sessionid = loginAndGetCookie().cookie;
 
         // 带着Cookie进行访问 /api/status 应该处于登录状态
         String statusResponse = doHttpRequest("/api/status", true, null, sessionid).body;

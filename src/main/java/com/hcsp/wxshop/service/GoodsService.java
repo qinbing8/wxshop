@@ -27,6 +27,7 @@ public class GoodsService {
         Shop shop = shopMapper.selectByPrimaryKey(goods.getShopId());
 
         if (Objects.equals(shop.getOwnerUserId(), UserContext.getCurrentUser().getId())) {
+            goods.setStatus(DataStatus.OK.getName());
             long id = goodsMapper.insert(goods);
             goods.setId(id);
             return goods;

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hcsp.wxshop.entity.DataStatus;
+import com.hcsp.wxshop.entity.HttpException;
 import com.hcsp.wxshop.entity.PageResponse;
 import com.hcsp.wxshop.generate.Goods;
 import com.hcsp.wxshop.generate.GoodsMapper;
@@ -68,9 +69,11 @@ class GoodsServiceTest {
     public void createGoodsFailedIfUserIsNotOwner() {
         // 假如说当前的店铺的店主id不是1，就会丢出NotAuthorizedForShopException异常
         when(shop.getOwnerUserId()).thenReturn(2L);
-        assertThrows(GoodsService.NotAuthorizedForShopException.class, () -> {
+        HttpException thrownException = assertThrows(HttpException.class, () -> {
             goodsService.createGoods(goods);
         });
+
+        assertEquals(403, thrownException.getStatusCode());
     }
 
     @Test
@@ -79,9 +82,11 @@ class GoodsServiceTest {
 
         when(shop.getOwnerUserId()).thenReturn(1L);
         when(goodsMapper.selectByPrimaryKey(goodsToBeDeleted)).thenReturn(null);
-        assertThrows(GoodsService.ResourceNotFoundException.class, () -> {
+        HttpException thrownException = assertThrows(HttpException.class, () -> {
             goodsService.deleteGoodsById(goodsToBeDeleted);
         });
+
+        assertEquals(404, thrownException.getStatusCode());
     }
 
     @Test
@@ -89,9 +94,11 @@ class GoodsServiceTest {
         long goodsToBeDeleted = 123;
 
         when(shop.getOwnerUserId()).thenReturn(2L);
-        assertThrows(GoodsService.NotAuthorizedForShopException.class, () -> {
+        HttpException thrownException = assertThrows(HttpException.class, () -> {
             goodsService.deleteGoodsById(goodsToBeDeleted);
         });
+
+        assertEquals(403, thrownException.getStatusCode());
     }
 
     @Test
