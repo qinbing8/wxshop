@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hcsp.wxshop.generate.ShoppingCartQueryMapper">
+    <select id="countHowManyShopsInUserShoppingCart" resultType="int" parameterType="long">
+        SELECT COUNT(DISTINCT SHOPPING_CART.SHOP_ID)
+        from SHOPPING_CART
+        where USER_ID = #{userId}
+    </select>
+    <select id="selectShoppingCartDataByUserId" resultType="" parameterType="Map">
+        SELECT SHOP.ID              AS SHOP_ID,
+               SHOP.NAME            AS SHOP_NAME,
+               SHOP.DESCRIPTION     AS SHOP_DESCRIPTION,
+               SHOP.IMG_URL         AS SHOP_IMG_URL,
+               SHOP.OWNER_USER_ID   AS SHOP_OWNER_ID,
+               SHOP.CREATED_AT      AS SHOP_CERATED_AT,
+               SHOP.UPDATED_AT      AS SHOP_UPDATE_AT,
+               GOODS.ID             AS GOODS_ID,
+               GOODS.NAME           AS GOODS_NAME,
+               GOODS.DESCRIPTION    AS GOODS_DESCRIPTION,
+               GOODS.DETAILS        AS GOODS_DETAILS,
+               GOODS.IMG_URL        AS GOODS_IMG_URL,
+               GOODS.PRICE          AS GOODS_PRICE,
+               SHOPPING_CART.NUMBER AS GOODS_NUMBER,
+               GOODS.CREATED_AT     AS GOODS_CREATED_AT,
+               GOODS.UPDATED_AT     AS GOODS_UPDATED_AT
+        FROM (
+                 SELECT DISTINCT SHOP_ID
+                 FROM SHOPPING_CART
+                 WHERE USER_ID = #{userId} 
+                 LIMIT #{offset}, #{limit}
+             ) t1
+                 JOIN SHOPPING_CART ON t1.SHOP_ID = SHOPPING_CART.SHOP_ID
+                 JOIN GOODS on SHOPPING_CART.GOODS_ID = GOODS.ID
+    </select>
+    
+</mapper>
