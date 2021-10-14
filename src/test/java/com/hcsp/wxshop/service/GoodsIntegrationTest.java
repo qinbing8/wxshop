@@ -30,7 +30,7 @@ public class GoodsIntegrationTest extends AbstractIntegrationTest {
 
         HttpResponse shopResponse = doHttpRequest(
             "/api/v1/shop",
-            false,
+            "POST",
             shop,
             loginResponse.cookie);
 
@@ -55,7 +55,7 @@ public class GoodsIntegrationTest extends AbstractIntegrationTest {
 
         HttpResponse response = doHttpRequest(
             "/api/v1/goods",
-            false,
+            "POST",
             goods,
             loginResponse.cookie);
 

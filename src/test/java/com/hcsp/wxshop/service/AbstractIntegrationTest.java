@@ -5,6 +5,7 @@ import static com.hcsp.wxshop.service.TelVerificationServiceTest.VALID_PARAMETER
 import static java.net.HttpURLConnection.HTTP_OK;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kevinsawicki.http.HttpRequest;
 import com.hcsp.wxshop.entity.LoginResponse;
@@ -42,7 +43,7 @@ public class AbstractIntegrationTest {
         flyway.migrate();
     }
 
-    public ObjectMapper objectMapper = new ObjectMapper();
+    public static ObjectMapper objectMapper = new ObjectMapper();
 
     public String getUrl(String apiName) {
         // 获取集成测试的端口号
@@ -51,22 +52,22 @@ public class AbstractIntegrationTest {
 
     public UserLoginResponse loginAndGetCookie() throws JsonProcessingException {
         // 最开始默认情况下，访问/api/v1/status 处于未登录状态，
-        String statusResponse = doHttpRequest("/api/v1/status", true, null, null).body;
+        String statusResponse = doHttpRequest("/api/v1/status", "GET", null, null).body;
         LoginResponse statusResponseData = objectMapper.readValue(statusResponse, LoginResponse.class);
         Assertions.assertFalse(statusResponseData.isLogin());
 
         // 发送验证码
-        int respondseCode = doHttpRequest("/api/v1/code", false, VALID_PARAMETER, null).code;
+        int respondseCode = doHttpRequest("/api/v1/code", "POST", VALID_PARAMETER, null).code;
         Assertions.assertEquals(HTTP_OK, respondseCode);
 
         // 带着验证码进行登录，得到cookie
-        HttpResponse loginResponse = doHttpRequest("/api/v1/login", false, VALID_PARAMETER_CODE, null);
+        HttpResponse loginResponse = doHttpRequest("/api/v1/login", "POST", VALID_PARAMETER_CODE, null);
         List<String> setCookie = loginResponse.headers.get("Set-Cookie");
         String cookie = getSeesionIdFromSetCookie(setCookie.stream().filter(c -> c.contains("JSESSIONID"))
             .findFirst()
             .get());
 
-        statusResponse = doHttpRequest("/api/v1/status", true, null, cookie).body;
+        statusResponse = doHttpRequest("/api/v1/status", "GET", null, cookie).body;
         statusResponseData = objectMapper.readValue(statusResponse, LoginResponse.class);
 
         return new UserLoginResponse(cookie, statusResponseData.getUser());
@@ -99,12 +100,28 @@ public class AbstractIntegrationTest {
             this.body = body;
             this.headers = headers;
         }
+
+        public <T> T asJsonObject(TypeReference<T> typeReference) throws JsonProcessingException {
+            T result = objectMapper.readValue(body, typeReference);
+            return result;
+        }
     }
 
-    public HttpResponse doHttpRequest(String apiName, boolean isGet, Object requestBody,
+    private HttpRequest createRequest(String url, String method) {
+        if ("PATCH".equalsIgnoreCase(method)) {
+            HttpRequest request = new HttpRequest(url, "POST");
+            request.header("X-HTTP-Method-Override", "PATCH");
+            return request;
+        } else {
+            return new HttpRequest(url, method);
+        }
+    }
+
+    public HttpResponse doHttpRequest(String apiName, String httpMethod, Object requestBody,
                                       String cookie)
         throws JsonProcessingException {
-        HttpRequest request = isGet ? HttpRequest.get(getUrl(apiName)) : HttpRequest.post(getUrl(apiName));
+        HttpRequest request = createRequest(getUrl(apiName), httpMethod);
+
         if (cookie != null) {
             request.header("Cookie", cookie);
         }

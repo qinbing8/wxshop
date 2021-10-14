@@ -1,6 +1,8 @@
 package com.hcsp.wxshop.controller;
 
+import com.hcsp.wxshop.entity.HttpException;
 import com.hcsp.wxshop.entity.PageResponse;
+import com.hcsp.wxshop.entity.Response;
 import com.hcsp.wxshop.entity.ShoppingCartData;
 import com.hcsp.wxshop.service.ShoppingCartService;
 import com.hcsp.wxshop.service.UserContext;
@@ -21,13 +23,22 @@ public class ShoppingCartController {
 
     @Autowired
     public ShoppingCartController(
-        ShoppingCartService shoppingCartService) {
+            ShoppingCartService shoppingCartService) {
         this.shoppingCartService = shoppingCartService;
     }
 
+    /**
+     *
+     * @param request 加购物车请求
+     * @return 添加后的结果
+     */
     @PostMapping("/shoppingCart")
-    public void addToShoppingCart(@RequestBody AddToShoppingCartRequest request) {
-
+    public Response<ShoppingCartData> addToShoppingCart(@RequestBody AddToShoppingCartRequest request) {
+        try {
+            return Response.of(shoppingCartService.addToShoppingCart(request));
+        } catch (HttpException e) {
+            return Response.of(e.getMessge(), null);
+        }
     }
 
     public static class AddToShoppingCartRequest {
@@ -65,11 +76,11 @@ public class ShoppingCartController {
 
     @GetMapping("/shoppingCart")
     public PageResponse<ShoppingCartData> getShoppingCart(
-        @RequestParam("pageNum") int pageNum,
-        @RequestParam("pageSize") int pageSize
+            @RequestParam("pageNum") int pageNum,
+            @RequestParam("pageSize") int pageSize
     ) {
         return shoppingCartService.getShoppingCartOfUser(UserContext.getCurrentUser().getId(),
-            pageNum,
-            pageSize);
+                pageNum,
+                pageSize);
     }
 }
