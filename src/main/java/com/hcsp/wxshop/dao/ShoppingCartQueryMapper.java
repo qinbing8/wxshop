@@ -11,9 +11,9 @@ public interface ShoppingCartQueryMapper {
     int countHowManyShopsInUserShoppingCart(long userId);
 
     List<ShoppingCartData> selectShoppingCartDataByUserId(
-        @Param("userId") long userId,
-        @Param("limit") int limit,
-        @Param("offset") int offset
+            @Param("userId") long userId,
+            @Param("limit") int limit,
+            @Param("offset") int offset
     );
 
     List<ShoppingCartData> selectShoppingCartDataByUserIdShopId(
@@ -21,5 +21,8 @@ public interface ShoppingCartQueryMapper {
             @Param("shopId") long shopId
 
     );
+
+    void deleteShoppingCart(@Param("goodsId") long goodsId,
+                            @Param("userId") long userId);
 
 }
