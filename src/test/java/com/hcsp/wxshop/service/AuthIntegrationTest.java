@@ -8,10 +8,12 @@ import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.kevinsawicki.http.HttpRequest;
 import com.hcsp.wxshop.WxshopApplication;
+import com.hcsp.wxshop.api.OrderService;
 import com.hcsp.wxshop.entity.LoginResponse;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
@@ -21,6 +23,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest(classes = WxshopApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {"spring.config.location=classpath:test-application.yml"})
 class AuthIntegrationTest extends AbstractIntegrationTest {
+    @Autowired
+    OrderService orderService;
+
     @Test
     void loginLogoutTest() throws JsonProcessingException {
         String sessionid = loginAndGetCookie().cookie;
@@ -44,10 +49,10 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
     @Test
     void returnHttpOKWhenParameterIsCorrect() throws JsonProcessingException {
         int respondseCode = HttpRequest.post(getUrl("/api/v1/code"))
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .accept(MediaType.APPLICATION_JSON_VALUE)
-            .send(objectMapper.writeValueAsString(VALID_PARAMETER))
-            .code();
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.APPLICATION_JSON_VALUE)
+                .send(objectMapper.writeValueAsString(VALID_PARAMETER))
+                .code();
 
         Assertions.assertEquals(HTTP_OK, respondseCode);
     }
@@ -55,10 +60,10 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
     @Test
     void returnHttpBadRequestWhenParameterIsCorrect() throws JsonProcessingException {
         int respondseCode = HttpRequest.post(getUrl("/api/v1/code"))
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .accept(MediaType.APPLICATION_JSON_VALUE)
-            .send(objectMapper.writeValueAsString(TelVerificationServiceTest.EMPTY_TEL))
-            .code();
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.APPLICATION_JSON_VALUE)
+                .send(objectMapper.writeValueAsString(TelVerificationServiceTest.EMPTY_TEL))
+                .code();
 
         Assertions.assertEquals(HTTP_BAD_REQUEST, respondseCode);
     }
@@ -66,9 +71,9 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void returnUnauthorizedIfNotLogin() {
         int respondseCode = HttpRequest.post(getUrl("/api/v1/any"))
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .accept(MediaType.APPLICATION_JSON_VALUE)
-            .code();
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.APPLICATION_JSON_VALUE)
+                .code();
 
         Assertions.assertEquals(HTTP_UNAUTHORIZED, respondseCode);
     }
