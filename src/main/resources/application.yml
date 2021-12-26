@@ -9,6 +9,9 @@ spring:
 mybatis:
   config-location: classpath:db/mybatis/config.xml
 wxshop:
+  redis:
+    host: 127.0.0.1
+    port: 6379
   orderservice:
     version: 1.0.0
     url: ""

@@ -18,9 +18,8 @@ public class ShiroRealm extends AuthorizingRealm {
     public ShiroRealm(VerificationCodeCheckService verificationCodeCheckService) {
         this.verificationCodeCheckService = verificationCodeCheckService;
         this.setCredentialsMatcher(
-            (token, info) -> new String((char[]) token.getCredentials()).equals(info.getCredentials()));
+                (token, info) -> new String((char[]) token.getCredentials()).equals(info.getCredentials()));
     }
-
 
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {

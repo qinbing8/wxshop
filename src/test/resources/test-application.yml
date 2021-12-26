@@ -17,6 +17,9 @@ dubbo:
   registry:
     address: zookeeper://127.0.0.1:2181
 wxshop:
+  redis:
+    host: 127.0.0.1
+    port: 6380
   orderservice:
     version: 1.0.0
     url: dubbo://127.0.0.1:12345
