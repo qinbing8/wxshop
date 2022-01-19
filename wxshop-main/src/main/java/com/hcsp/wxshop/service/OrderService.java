@@ -1,5 +1,6 @@
 package com.hcsp.wxshop.service;
 
+import com.hcsp.api.DataStatus;
 import com.hcsp.api.data.GoodsInfo;
 import com.hcsp.api.data.OrderInfo;
 import com.hcsp.api.generate.Order;
@@ -9,19 +10,16 @@ import com.hcsp.wxshop.entity.GoodsWithNumber;
 import com.hcsp.wxshop.entity.HttpException;
 import com.hcsp.wxshop.entity.OrderResponse;
 import com.hcsp.wxshop.generate.Goods;
-import com.hcsp.wxshop.generate.GoodsMapper;
 import com.hcsp.wxshop.generate.ShopMapper;
 import com.hcsp.wxshop.generate.UserMapper;
-import jdk.nashorn.internal.runtime.Context;
 import org.apache.dubbo.config.annotation.Reference;
-import org.apache.dubbo.config.annotation.Service;
-import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,17 +46,16 @@ public class OrderService {
     public OrderService(UserMapper userMapper,
                         GoodsStockMapper goodsStockMapper,
                         ShopMapper shopMapper,
-                        GoodsService goodsService) {
+                        GoodsService goodsService,
+                        SqlSessionFactory sqlSessionFactory) {
         this.userMapper = userMapper;
         this.shopMapper = shopMapper;
         this.goodsService = goodsService;
         this.goodsStockMapper = goodsStockMapper;
+        this.sqlSessionFactory = sqlSessionFactory;
     }
 
     public OrderResponse createOrder(OrderInfo orderInfo, Long userId) {
-        if (!deductStock(orderInfo)) {
-            throw HttpException.gone("扣减库存失败！");
-        }
         Map<Long, Goods> idToGoodsMap = getIdToGoodsMap(orderInfo);
         Order createdOrder = createOrderViaRpc(orderInfo, userId, idToGoodsMap);
         return generateResponse(createdOrder, idToGoodsMap, orderInfo);
@@ -89,30 +86,22 @@ public class OrderService {
     private Order createOrderViaRpc(OrderInfo orderInfo, Long userId, Map<Long, Goods> idToGoodsMap) {
         Order order = new Order();
         order.setUserId(userId);
+        order.setStatus(DataStatus.PENDING.getName());
         order.setAddress(userMapper.selectByPrimaryKey(userId).getAddress());
         order.setTotalPrice(calculateTotalPrice(orderInfo, idToGoodsMap));
         return orderRpcService.createOrder(orderInfo, order);
     }
 
-    /**
+    /*
      * 扣减库存
-     *
-     * @param orderInfo
-     * @return 若全部扣减成功，返回true，否则返回false
      */
-    private boolean deductStock(OrderInfo orderInfo) {
-        try (SqlSession sqlSession = sqlSessionFactory.openSession(false)) {
-            // 事情
-            for (GoodsInfo goodsInfo : orderInfo.getGoods()) {
-                if (goodsStockMapper.deductStock(goodsInfo) <= 0) {
-                    LOGGER.error("扣减库存失败，商品id：" + goodsInfo.getId() + ",数量：" + goodsInfo.getNumber());
-                    sqlSession.rollback();
-                    return false;
-                }
+    @Transactional
+    public void deductStock(OrderInfo orderInfo) {
+        for (GoodsInfo goodsInfo : orderInfo.getGoods()) {
+            if (goodsStockMapper.deductStock(goodsInfo) <= 0) {
+                LOGGER.error("扣减库存失败，商品id：" + goodsInfo.getId() + ",数量：" + goodsInfo.getNumber());
+                throw HttpException.gone("扣减库存失败！");
             }
-            // 做完之后手动提交
-            sqlSession.commit();
-            return true;
         }
     }
 
@@ -122,8 +111,8 @@ public class OrderService {
         return ret;
     }
 
-    private BigDecimal calculateTotalPrice(OrderInfo orderInfo, Map<Long, Goods> idToGoodsMap) {
-        BigDecimal result = BigDecimal.ZERO;
+    private long calculateTotalPrice(OrderInfo orderInfo, Map<Long, Goods> idToGoodsMap) {
+        long result = 0;
 
         for (GoodsInfo goodsInfo : orderInfo.getGoods()) {
             Goods goods = idToGoodsMap.get(goodsInfo.getId());
@@ -134,7 +123,7 @@ public class OrderService {
                 throw HttpException.badRequest("number非法：" + goodsInfo.getNumber());
             }
 
-            result = result.add(goods.getPrice().multiply(new BigDecimal(goodsInfo.getNumber())));
+            result = result + goods.getPrice() * goodsInfo.getNumber();
         }
         return result;
     }

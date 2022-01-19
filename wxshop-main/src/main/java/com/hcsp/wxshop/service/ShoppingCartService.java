@@ -41,6 +41,7 @@ public class ShoppingCartService {
         this.shoppingCartQueryMapper = shoppingCartQueryMapper;
         this.goodsMapper = goodsMapper;
         this.sqlSessionFactory = sqlSessionFactory;
+        this.goodsService = goodsService;
     }
 
     public PageResponse<ShoppingCartData> getShoppingCartOfUser(Long userId,
