@@ -70,7 +70,6 @@ public class ShiroConfig implements WebMvcConfigurer {
         return securityManager;
     }
 
-
     @Bean
     public DataSourceTransactionManager transactionManager(DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);

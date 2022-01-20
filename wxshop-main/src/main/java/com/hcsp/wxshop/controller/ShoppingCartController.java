@@ -1,6 +1,5 @@
 package com.hcsp.wxshop.controller;
 
-import com.hcsp.wxshop.entity.HttpException;
 import com.hcsp.wxshop.entity.PageResponse;
 import com.hcsp.wxshop.entity.Response;
 import com.hcsp.wxshop.entity.ShoppingCartData;
@@ -28,11 +27,7 @@ public class ShoppingCartController {
      */
     @PostMapping("/shoppingCart")
     public Response<ShoppingCartData> addToShoppingCart(@RequestBody AddToShoppingCartRequest request) {
-        try {
-            return Response.of(shoppingCartService.addToShoppingCart(request, UserContext.getCurrentUser().getId()));
-        } catch (HttpException e) {
-            return Response.of(e.getMessge(), null);
-        }
+        return Response.of(shoppingCartService.addToShoppingCart(request, UserContext.getCurrentUser().getId()));
     }
 
     public static class AddToShoppingCartRequest {
@@ -79,16 +74,11 @@ public class ShoppingCartController {
     }
 
     /**
-     *
      * @param goodsId 要删除的商品id
      * @return 更新后的店铺数据
      */
     @DeleteMapping("/shoppingCart/{id}")
     public Response<ShoppingCartData> deleteGoodsInShoppingCart(@PathVariable("id") Long goodsId) {
-        try {
-            return Response.of(shoppingCartService.deleteGoodsInShoppingCart(goodsId, UserContext.getCurrentUser().getId()));
-        } catch (HttpException e) {
-            return Response.of(e.getMessge(), null);
-        }
+        return Response.of(shoppingCartService.deleteGoodsInShoppingCart(goodsId, UserContext.getCurrentUser().getId()));
     }
 }

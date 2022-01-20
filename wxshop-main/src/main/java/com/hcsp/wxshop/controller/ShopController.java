@@ -1,6 +1,5 @@
 package com.hcsp.wxshop.controller;
 
-import com.hcsp.wxshop.entity.HttpException;
 import com.hcsp.wxshop.entity.PageResponse;
 import com.hcsp.wxshop.entity.Response;
 import com.hcsp.wxshop.generate.Shop;
@@ -8,15 +7,7 @@ import com.hcsp.wxshop.service.ShopService;
 import com.hcsp.wxshop.service.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -87,7 +78,7 @@ public class ShopController {
         return shopService.getShopByUserId(UserContext.getCurrentUser().getId(), pageNum, pageSize);
     }
 
-        // @formatter:off
+    // @formatter:off
     /**
      * @api {post} /shop 创建店铺
      * @apiName CreateShop
@@ -196,12 +187,7 @@ public class ShopController {
                                      @RequestBody Shop shop,
                                      HttpServletResponse response) {
         shop.setId(id);
-        try {
-            return Response.of(shopService.updateShop(shop, UserContext.getCurrentUser().getId()));
-        } catch (HttpException e) {
-            response.setStatus(e.getStatusCode());
-            return Response.of(e.getMessage(), null);
-        }
+        return Response.of(shopService.updateShop(shop, UserContext.getCurrentUser().getId()));
     }
 
     // @formatter:off
@@ -244,17 +230,11 @@ public class ShopController {
     /**
      * 删除店铺
      *
-     * @param shopid
-     * @param response
+     * @param shopid 店铺id
      * @return 刚刚删除的店铺
      */
     @DeleteMapping("/shop/{id}")
-    public Response<Shop> deleteShop(@PathVariable("id") Long shopid, HttpServletResponse response) {
-        try {
-            return Response.of(shopService.deleteShop(shopid, UserContext.getCurrentUser().getId()));
-        } catch (HttpException e) {
-            response.setStatus(e.getStatusCode());
-            return Response.of(e.getMessage(), null);
-        }
+    public Response<Shop> deleteShop(@PathVariable("id") Long shopid) {
+        return Response.of(shopService.deleteShop(shopid, UserContext.getCurrentUser().getId()));
     }
 }
