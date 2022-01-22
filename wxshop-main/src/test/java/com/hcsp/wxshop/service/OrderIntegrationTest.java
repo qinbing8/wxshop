@@ -104,4 +104,9 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
         // 确保扣库存成功的回滚了
         canCreteOrder();
     }
+
+    @Test
+    public void canDeleteOrder() throws Exception {
+        canCreteOrder();
+    }
 }

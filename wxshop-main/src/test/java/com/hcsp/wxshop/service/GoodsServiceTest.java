@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hcsp.api.DataStatus;
-import com.hcsp.wxshop.entity.HttpException;
+import com.hcsp.api.exceptions.HttpException;
 import com.hcsp.wxshop.entity.PageResponse;
 import com.hcsp.wxshop.generate.Goods;
 import com.hcsp.wxshop.generate.GoodsMapper;
