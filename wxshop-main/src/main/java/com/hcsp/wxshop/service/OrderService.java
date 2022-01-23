@@ -3,12 +3,13 @@ package com.hcsp.wxshop.service;
 import com.hcsp.api.DataStatus;
 import com.hcsp.api.data.GoodsInfo;
 import com.hcsp.api.data.OrderInfo;
+import com.hcsp.api.data.PageResponse;
 import com.hcsp.api.data.RpcOrderGoods;
+import com.hcsp.api.exceptions.HttpException;
 import com.hcsp.api.generate.Order;
 import com.hcsp.api.rpc.OrderRpcService;
 import com.hcsp.wxshop.dao.GoodsStockMapper;
 import com.hcsp.wxshop.entity.GoodsWithNumber;
-import com.hcsp.api.exceptions.HttpException;
 import com.hcsp.wxshop.entity.OrderResponse;
 import com.hcsp.wxshop.generate.Goods;
 import com.hcsp.wxshop.generate.ShopMapper;
@@ -135,5 +136,30 @@ public class OrderService {
         Map<Long, Goods> idToGoodsMap = getIdToGoodsMap(rpcOrderGoods.getGoods());
         return generateResponse(rpcOrderGoods.getOrder(), idToGoodsMap, rpcOrderGoods.getGoods());
 
+    }
+
+    public PageResponse<OrderResponse> getOrder(Integer pageNum, Integer pageSize, DataStatus status) {
+        PageResponse<RpcOrderGoods> rpcOrderGoods = orderRpcService.getOrder(pageNum, pageSize, status);
+
+        List<GoodsInfo> goods = rpcOrderGoods
+                .getData()
+                .stream()
+                .map(RpcOrderGoods::getGoods)
+                .flatMap(List::stream)
+                .collect(toList());
+
+        Map<Long, Goods> idToGoodsMap = getIdToGoodsMap(goods);
+
+        List<OrderResponse> orders = rpcOrderGoods.getData()
+                .stream()
+                .map(order -> generateResponse(order.getOrder(), idToGoodsMap, order.getGoods()))
+                .collect(toList());
+
+        return PageResponse.pagedData(
+                rpcOrderGoods.getPageNum(),
+                rpcOrderGoods.getPageSize(),
+                rpcOrderGoods.getTotalPage(),
+                orders
+        );
     }
 }

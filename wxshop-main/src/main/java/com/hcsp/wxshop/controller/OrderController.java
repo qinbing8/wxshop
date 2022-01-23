@@ -4,7 +4,7 @@ import com.hcsp.api.DataStatus;
 import com.hcsp.api.data.OrderInfo;
 import com.hcsp.api.exceptions.HttpException;
 import com.hcsp.wxshop.entity.OrderResponse;
-import com.hcsp.wxshop.entity.PageResponse;
+import com.hcsp.api.data.PageResponse;
 import com.hcsp.wxshop.entity.Response;
 import com.hcsp.wxshop.service.OrderService;
 import com.hcsp.wxshop.service.UserContext;

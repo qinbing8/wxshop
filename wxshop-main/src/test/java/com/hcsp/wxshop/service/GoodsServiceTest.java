@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.hcsp.api.DataStatus;
 import com.hcsp.api.exceptions.HttpException;
-import com.hcsp.wxshop.entity.PageResponse;
+import com.hcsp.api.data.PageResponse;
 import com.hcsp.wxshop.generate.Goods;
 import com.hcsp.wxshop.generate.GoodsMapper;
 import com.hcsp.wxshop.generate.Shop;
