@@ -9,7 +9,6 @@ import com.hcsp.api.exceptions.HttpException;
 import com.hcsp.api.generate.*;
 import com.hcsp.api.rpc.OrderRpcService;
 import com.hscp.order.mapper.MyOrderMapper;
-import org.apache.dubbo.common.utils.Page;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -44,6 +43,11 @@ public class RpcOrderServiceImpl implements OrderRpcService {
     }
 
     @Override
+    public Order getOrderById(long orderId) {
+        return orderMapper.selectByPrimaryKey(orderId);
+    }
+
+    @Override
     public RpcOrderGoods deleteOrder(long orderId, long userId) {
         Order order = orderMapper.selectByPrimaryKey(orderId);
         if (order == null) {
@@ -52,6 +56,7 @@ public class RpcOrderServiceImpl implements OrderRpcService {
         if (order.getUserId() != userId) {
             throw HttpException.forbidden("无权访问！");
         }
+
         List<GoodsInfo> goodsInfo = myOrderMapper.getGoodsInfoOfOrder(orderId);
 
         order.setStatus(DELETED.getName());
@@ -104,6 +109,17 @@ public class RpcOrderServiceImpl implements OrderRpcService {
                 pageSize,
                 totalPage,
                 rpcOrderGoods);
+    }
+
+    @Override
+    public RpcOrderGoods updateOrder(Order order) {
+        orderMapper.updateByPrimaryKeySelective(order);
+
+        List<GoodsInfo> goodsInfo = myOrderMapper.getGoodsInfoOfOrder(order.getId());
+        RpcOrderGoods result = new RpcOrderGoods();
+        result.setGoods(goodsInfo);
+        result.setOrder(orderMapper.selectByPrimaryKey(order.getId()));
+        return result;
     }
 
     private RpcOrderGoods toRpcOrderGoods(Order order, Map<Long, List<OrderGoods>> orderIdToGoodsMap) {

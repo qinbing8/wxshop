@@ -3,6 +3,7 @@ package com.hcsp.wxshop.controller;
 import com.hcsp.api.DataStatus;
 import com.hcsp.api.data.OrderInfo;
 import com.hcsp.api.exceptions.HttpException;
+import com.hcsp.api.generate.Order;
 import com.hcsp.wxshop.entity.OrderResponse;
 import com.hcsp.api.data.PageResponse;
 import com.hcsp.wxshop.entity.Response;
@@ -45,5 +46,15 @@ public class OrderController {
         }
 
         return orderService.getOrder(pageNum, pageSize, DataStatus.valueOf(status));
+    }
+
+    @PatchMapping("/order")
+    public Response<OrderResponse> updateOrder(@RequestBody Order order) {
+        if (order.getExpressCompany() != null) {
+            return orderService.updateExpressInfomation(order, UserContext.getCurrentUser().getId());
+        } else {
+            return orderService.updataOrderStatus(order, UserContext.getCurrentUser().getId());
+        }
+
     }
 }

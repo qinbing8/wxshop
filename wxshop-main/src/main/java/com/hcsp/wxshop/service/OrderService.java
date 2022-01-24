@@ -11,7 +11,9 @@ import com.hcsp.api.rpc.OrderRpcService;
 import com.hcsp.wxshop.dao.GoodsStockMapper;
 import com.hcsp.wxshop.entity.GoodsWithNumber;
 import com.hcsp.wxshop.entity.OrderResponse;
+import com.hcsp.wxshop.entity.Response;
 import com.hcsp.wxshop.generate.Goods;
+import com.hcsp.wxshop.generate.Shop;
 import com.hcsp.wxshop.generate.ShopMapper;
 import com.hcsp.wxshop.generate.UserMapper;
 import org.apache.dubbo.config.annotation.Reference;
@@ -131,15 +133,16 @@ public class OrderService {
     }
 
     public OrderResponse deleteOrder(long orderId, long userId) {
-        RpcOrderGoods rpcOrderGoods = orderRpcService.deleteOrder(orderId, userId);
-
-        Map<Long, Goods> idToGoodsMap = getIdToGoodsMap(rpcOrderGoods.getGoods());
-        return generateResponse(rpcOrderGoods.getOrder(), idToGoodsMap, rpcOrderGoods.getGoods());
-
+        return toOrderResponse(orderRpcService.deleteOrder(orderId, userId));
     }
 
-    public PageResponse<OrderResponse> getOrder(Integer pageNum, Integer pageSize, DataStatus status) {
-        PageResponse<RpcOrderGoods> rpcOrderGoods = orderRpcService.getOrder(pageNum, pageSize, status);
+    private OrderResponse toOrderResponse(RpcOrderGoods rpcOrderGoods) {
+        Map<Long, Goods> idToGoodsMap = getIdToGoodsMap(rpcOrderGoods.getGoods());
+        return generateResponse(rpcOrderGoods.getOrder(), idToGoodsMap, rpcOrderGoods.getGoods());
+    }
+
+    public PageResponse<OrderResponse> getOrder(long userId, Integer pageNum, Integer pageSize, DataStatus status) {
+        PageResponse<RpcOrderGoods> rpcOrderGoods = orderRpcService.getOrder(userId, pageNum, pageSize, status);
 
         List<GoodsInfo> goods = rpcOrderGoods
                 .getData()
@@ -161,5 +164,48 @@ public class OrderService {
                 rpcOrderGoods.getTotalPage(),
                 orders
         );
+    }
+
+    // 商家更新订单
+    public OrderResponse updateExpressInfomation(Order order, long userId) {
+        // 获取订单
+        Order orderInDatabase = orderRpcService.getOrderById(order.getId());
+        if (orderInDatabase == null) {
+            throw HttpException.noutFount("订单未找到: " + order.getId());
+        }
+
+        // 更新订单必须是订单商铺的所有者
+        Shop shop = shopMapper.selectByPrimaryKey(orderInDatabase.getShopId());
+        if (shop == null) {
+            throw HttpException.noutFount("店铺未找到: " + orderInDatabase.getShopId());
+        }
+
+        if (shop.getOwnerUserId() != userId) {
+            throw HttpException.forbidden("无权访问！");
+        }
+
+        // 注意：现在的order是前端传过来的，很危险，创建一个新的Order，只把里面我们关心的数据给灌进去，防止别有用心的人修改里面的数据
+        Order copy = new Order();
+        copy.setId(order.getId());
+        copy.setExpressId(order.getExpressId());
+        copy.setExpressCompany(order.getExpressCompany());
+        // 把更新订单的东西传递给Rpc
+        return toOrderResponse(orderRpcService.updateOrder(copy));
+    }
+
+    public OrderResponse updataOrderStatus(Order order, long userId) {
+        // 获取订单
+        Order orderInDatabase = orderRpcService.getOrderById(order.getId());
+        if (orderInDatabase == null) {
+            throw HttpException.noutFount("订单未找到: " + order.getId());
+        }
+
+        if (orderInDatabase.getUserId() != userId) {
+            throw HttpException.forbidden("无权访问！");
+        }
+
+        Order copy = new Order();
+        copy.setStatus(order.getStatus());
+        return toOrderResponse(orderRpcService.updateOrder(copy));
     }
 }
