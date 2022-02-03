@@ -2,10 +2,10 @@ package com.hcsp.wxshop.controller;
 
 import com.hcsp.api.DataStatus;
 import com.hcsp.api.data.OrderInfo;
+import com.hcsp.api.data.PageResponse;
 import com.hcsp.api.exceptions.HttpException;
 import com.hcsp.api.generate.Order;
 import com.hcsp.wxshop.entity.OrderResponse;
-import com.hcsp.api.data.PageResponse;
 import com.hcsp.wxshop.entity.Response;
 import com.hcsp.wxshop.service.OrderService;
 import com.hcsp.wxshop.service.UserContext;
@@ -45,15 +45,15 @@ public class OrderController {
             throw HttpException.badRequest("非法status: " + status);
         }
 
-        return orderService.getOrder(pageNum, pageSize, DataStatus.valueOf(status));
+        return orderService.getOrder(UserContext.getCurrentUser().getId(), pageNum, pageSize, DataStatus.fromStatus(status));
     }
 
-    @PatchMapping("/order")
-    public Response<OrderResponse> updateOrder(@RequestBody Order order) {
+    @RequestMapping(value = "/order/{id}", method = {RequestMethod.POST, RequestMethod.PATCH})
+    public Response<OrderResponse> updateOrder(@PathVariable("id") Integer id, @RequestBody Order order) {
         if (order.getExpressCompany() != null) {
-            return orderService.updateExpressInfomation(order, UserContext.getCurrentUser().getId());
+            return Response.of(orderService.updateExpressInfomation(order, UserContext.getCurrentUser().getId()));
         } else {
-            return orderService.updataOrderStatus(order, UserContext.getCurrentUser().getId());
+            return Response.of(orderService.updataOrderStatus(order, UserContext.getCurrentUser().getId()));
         }
 
     }

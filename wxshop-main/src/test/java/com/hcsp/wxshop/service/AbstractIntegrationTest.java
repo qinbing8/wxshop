@@ -64,8 +64,8 @@ public class AbstractIntegrationTest {
         HttpResponse loginResponse = doHttpRequest("/api/v1/login", "POST", VALID_PARAMETER_CODE, null);
         List<String> setCookie = loginResponse.headers.get("Set-Cookie");
         String cookie = getSeesionIdFromSetCookie(setCookie.stream().filter(c -> c.contains("JSESSIONID"))
-            .findFirst()
-            .get());
+                .findFirst()
+                .get());
 
         statusResponse = doHttpRequest("/api/v1/status", "GET", null, cookie).body;
         statusResponseData = objectMapper.readValue(statusResponse, LoginResponse.class);
@@ -101,7 +101,13 @@ public class AbstractIntegrationTest {
             this.headers = headers;
         }
 
+        HttpResponse assertOkStatusCode() {
+            Assertions.assertTrue(code >= 200 && code < 300);
+            return this;
+        }
+
         public <T> T asJsonObject(TypeReference<T> typeReference) throws JsonProcessingException {
+
             T result = objectMapper.readValue(body, typeReference);
             return result;
         }
@@ -119,7 +125,7 @@ public class AbstractIntegrationTest {
 
     public HttpResponse doHttpRequest(String apiName, String httpMethod, Object requestBody,
                                       String cookie)
-        throws JsonProcessingException {
+            throws JsonProcessingException {
         HttpRequest request = createRequest(getUrl(apiName), httpMethod);
 
         if (cookie != null) {

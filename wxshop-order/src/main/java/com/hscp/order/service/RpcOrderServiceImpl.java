@@ -126,12 +126,11 @@ public class RpcOrderServiceImpl implements OrderRpcService {
         RpcOrderGoods result = new RpcOrderGoods();
         result.setOrder(order);
 
-        List<GoodsInfo> goodsInfos = orderIdToGoodsMap
+        result.setGoods(orderIdToGoodsMap
                 .getOrDefault(order.getId(), Collections.emptyList())
                 .stream()
                 .map(this::toGoodsInfo)
-                .collect(toList());
-        result.setGoods(goodsInfos);
+                .collect(toList()));
         return result;
     }
 

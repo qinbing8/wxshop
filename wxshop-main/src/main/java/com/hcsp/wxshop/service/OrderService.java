@@ -11,7 +11,6 @@ import com.hcsp.api.rpc.OrderRpcService;
 import com.hcsp.wxshop.dao.GoodsStockMapper;
 import com.hcsp.wxshop.entity.GoodsWithNumber;
 import com.hcsp.wxshop.entity.OrderResponse;
-import com.hcsp.wxshop.entity.Response;
 import com.hcsp.wxshop.generate.Goods;
 import com.hcsp.wxshop.generate.Shop;
 import com.hcsp.wxshop.generate.ShopMapper;
