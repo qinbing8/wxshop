@@ -1,4 +1,4 @@
-package com.hscp.order.mapper;
+package com.hcsp.order.mapper;
 
 import com.hcsp.api.data.GoodsInfo;
 import com.hcsp.api.data.OrderInfo;

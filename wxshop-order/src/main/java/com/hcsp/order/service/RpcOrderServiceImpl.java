@@ -1,4 +1,4 @@
-package com.hscp.order.service;
+package com.hcsp.order.service;
 
 import com.hcsp.api.DataStatus;
 import com.hcsp.api.data.GoodsInfo;
@@ -6,9 +6,14 @@ import com.hcsp.api.data.OrderInfo;
 import com.hcsp.api.data.PageResponse;
 import com.hcsp.api.data.RpcOrderGoods;
 import com.hcsp.api.exceptions.HttpException;
-import com.hcsp.api.generate.*;
+import com.hcsp.api.generate.Order;
+import com.hcsp.api.generate.OrderExample;
+import com.hcsp.api.generate.OrderGoods;
+import com.hcsp.api.generate.OrderGoodsExample;
 import com.hcsp.api.rpc.OrderRpcService;
-import com.hscp.order.mapper.MyOrderMapper;
+import com.hcsp.order.generate.OrderGoodsMapper;
+import com.hcsp.order.generate.OrderMapper;
+import com.hcsp.order.mapper.MyOrderMapper;
 import org.apache.dubbo.config.annotation.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -25,14 +30,18 @@ import static java.util.stream.Collectors.toList;
 
 @Service(version = "${wxshop.orderservice.version}")
 public class RpcOrderServiceImpl implements OrderRpcService {
-    @Autowired
     private OrderMapper orderMapper;
 
-    @Autowired
     private MyOrderMapper myOrderMapper;
 
-    @Autowired
     private OrderGoodsMapper orderGoodsMapper;
+
+    @Autowired
+    public RpcOrderServiceImpl(OrderMapper orderMapper, MyOrderMapper myOrderMapper, OrderGoodsMapper orderGoodsMapper) {
+        this.orderMapper = orderMapper;
+        this.myOrderMapper = myOrderMapper;
+        this.orderGoodsMapper = orderGoodsMapper;
+    }
 
     @Override
     public Order createOrder(OrderInfo orderInfo, Order order) {
@@ -75,23 +84,17 @@ public class RpcOrderServiceImpl implements OrderRpcService {
                                                 Integer pageSize,
                                                 DataStatus status) {
         OrderExample countByStatus = new OrderExample();
-        setStatus(status, countByStatus);
+        setStatus(countByStatus, status);
         int count = (int) orderMapper.countByExample(countByStatus);
 
         OrderExample pagedOrder = new OrderExample();
         pagedOrder.setOffset((pageNum - 1) * pageSize);
         pagedOrder.setLimit(pageNum);
-        setStatus(status, pagedOrder).andUserIdEqualTo(userId);
+        setStatus(pagedOrder, status);
 
         // 把对应的订单查出来
         List<Order> orders = orderMapper.selectByExample(pagedOrder);
-        // 把所有订单id拿出来
-        List<Long> orderIds = orders.stream().map(Order::getId).collect(toList());
-        // 把对应订单的id查出来,createCriteria 创建条件
-        OrderGoodsExample selectByOrderIds = new OrderGoodsExample();
-        selectByOrderIds.createCriteria().andOrderIdIn(orderIds);
-        // 通过订单id得到订单商品
-        List<OrderGoods> orderGoods = orderGoodsMapper.selectByExample(selectByOrderIds);
+        List<OrderGoods> orderGoods = getOrderGoods(orders);
 
         // 如果count能整除那就count/pageSize，不能整除就count/pageSize+1
         int totalPage = count % pageSize == 0 ? count / pageSize : count / pageSize + 1;
@@ -109,6 +112,18 @@ public class RpcOrderServiceImpl implements OrderRpcService {
                 pageSize,
                 totalPage,
                 rpcOrderGoods);
+    }
+
+    private List<OrderGoods> getOrderGoods(List<Order> orders) {
+        if (orders.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> orderIds = orders.stream().map(Order::getId).collect(toList());
+
+        OrderGoodsExample selectByOrderIds = new OrderGoodsExample();
+        selectByOrderIds.createCriteria().andOrderIdIn(orderIds);
+        return orderGoodsMapper.selectByExample(selectByOrderIds);
     }
 
     @Override
@@ -141,7 +156,7 @@ public class RpcOrderServiceImpl implements OrderRpcService {
         return result;
     }
 
-    private OrderExample.Criteria setStatus(DataStatus status, OrderExample orderExample) {
+    private OrderExample.Criteria setStatus(OrderExample orderExample, DataStatus status) {
         if (status == null) {
             return orderExample.createCriteria().andStatusEqualTo(DELETED.getName());
         } else {
@@ -161,8 +176,7 @@ public class RpcOrderServiceImpl implements OrderRpcService {
         order.setCreatedAt(new Date());
         order.setUpdatedAt(new Date());
 
-        long id = orderMapper.insert(order);
-        order.setId(id);
+        orderMapper.insert(order);
     }
 
     private void verify(BooleanSupplier supplier, String message) {
