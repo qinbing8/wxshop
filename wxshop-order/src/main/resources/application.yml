@@ -17,5 +17,6 @@ mybatis:
 dubbo:
   registry:
     address: zookeeper://127.0.0.1:2181
+    timeout: 10000
   scan:
-    base-packages: com.hscp.order.service
+    base-packages: com.hcsp.order.service
